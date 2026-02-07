@@ -1,0 +1,12 @@
+/bin/
+main
+server
+nexo
+
+.env
+postgres_data/
+
+vendor/
+
+.vscode/
+.idea/

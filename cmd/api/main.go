@@ -9,6 +9,8 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/guilimacode/nexo/internal/handlers"
+	"github.com/guilimacode/nexo/internal/middleware"
 	"github.com/guilimacode/nexo/internal/store"
 )
 
@@ -30,6 +32,17 @@ func main() {
 
 	app := fiber.New()
 	app.Use(logger.New())
+
+	api := app.Group("/nexo")
+
+	api.Post("/signup", handlers.SignUpHandler)
+	api.Post("/login", handlers.LoginHandler)
+
+	users := api.Group("/users", middleware.Protected)
+
+	users.Delete("/:id", middleware.RoleMiddleware("owner"), handlers.DeleteUserHandler)
+	users.Put("/:id", handlers.UpdateUserHandler)
+	users.Put("/changepassword/:id", handlers.UpdatePasswordHandler)
 
 	log.Fatal(app.Listen(":3000"))
 }

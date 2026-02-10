@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/guilimacode/nexo/internal/models"
+	"github.com/guilimacode/nexo/internal/models/dtos"
 	"github.com/guilimacode/nexo/internal/store"
 	"github.com/guilimacode/nexo/internal/utils"
 )
@@ -15,32 +15,42 @@ func UpdateUserHandler(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "ID inválido"})
 	}
 
-	currentUser, err := store.GetUserById(id)
+	requesterOrgID := int64(c.Locals("org").(float64))
+
+	targetUser, err := store.GetUserById(id)
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Usuário não encontrado"})
 	}
 
-	var input models.User
-	if err := c.BodyParser(&input); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Dados inválidos"})
+	if targetUser.OrganizationID != requesterOrgID {
+		return c.Status(403).JSON(fiber.Map{"error": "Acesso negado: Usuário pertence a outra organização"})
 	}
 
-	if input.Email != currentUser.Email {
-		exists, _ := store.CheckEmailUniqueForUpdate(input.Email, id)
+	dto := new(dtos.UpdateUserDTO)
+	if err := c.BodyParser(dto); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "JSON inválido"})
+	}
+
+	if err := validate.Struct(dto); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Dados inválidos", "details": err.Error()})
+	}
+
+	if dto.Email != targetUser.Email {
+		exists, _ := store.CheckEmailUniqueForUpdate(dto.Email, id)
 		if exists {
 			return c.Status(400).JSON(fiber.Map{"error": "Email já em uso por outro usuário"})
 		}
 	}
 
-	currentUser.FullName = input.FullName
-	currentUser.Role = input.Role
-	currentUser.Email = input.Email
+	targetUser.FullName = dto.FullName
+	targetUser.Role = dto.Role
+	targetUser.Email = dto.Email
 
-	if err := store.UpdateUser(currentUser); err != nil {
+	if err := store.UpdateUser(targetUser); err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Erro ao atualizar"})
 	}
 
-	return c.JSON(fiber.Map{"message": "Usuário atualizado", "user": currentUser})
+	return c.JSON(fiber.Map{"message": "Usuário atualizado", "user": targetUser})
 }
 
 func UpdatePasswordHandler(c *fiber.Ctx) error {
@@ -56,7 +66,7 @@ func UpdatePasswordHandler(c *fiber.Ctx) error {
 		return c.Status(403).JSON(fiber.Map{"error": "Você não tem permissão para alterar a senha de outro usuário"})
 	}
 
-	input := new(models.ChangePasswordDTO)
+	input := new(dtos.ChangePasswordDTO)
 	if err := c.BodyParser(input); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Dados inválidos"})
 	}
@@ -88,6 +98,28 @@ func UpdatePasswordHandler(c *fiber.Ctx) error {
 
 func DeleteUserHandler(c *fiber.Ctx) error {
 	id, _ := strconv.ParseInt(c.Params("id"), 10, 64)
+
+	requesterOrgID := int64(c.Locals("org").(float64))
+	requesterRole := c.Locals("role").(string)
+
+	targetUser, err := store.GetUserById(id)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "Usuário não encontrado"})
+	}
+
+	if targetUser.OrganizationID != requesterOrgID {
+		return c.Status(403).JSON(fiber.Map{"error": "Acesso negado"})
+	}
+
+	if requesterRole == "seller" {
+		return c.Status(403).JSON(fiber.Map{"error": "Permissão insuficiente"})
+	}
+
+	requesterID := int64(c.Locals("sub").(float64))
+	if targetUser.ID == requesterID {
+		return c.Status(400).JSON(fiber.Map{"error": "Você não pode deletar seu próprio usuário"})
+	}
 
 	if err := store.DeleteUser(id); err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Erro ao deletar"})

@@ -14,13 +14,3 @@ type Address struct {
 	CreatedAt  time.Time `db:"created_at" json:"created_at"`
 	UpdatedAt  time.Time `db:"updated_at" json:"updated_at"`
 }
-
-type CreateAddressDTO struct {
-	Street     string `json:"street" validate:"required"`
-	Complement string `json:"complement"`
-	Number     int    `json:"number" validate:"required,numeric"`
-	District   string `json:"district" validate:"required"`
-	City       string `json:"city" validate:"required"`
-	State      string `json:"state" validate:"required,len=2,uppercase"`
-	ZipCode    string `json:"zip_code" validate:"required,len=8,numeric"`
-}

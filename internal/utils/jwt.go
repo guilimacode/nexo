@@ -8,17 +8,26 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var secretKey = []byte(os.Getenv("SECRET_KEY"))
+var secretKey []byte
 
-func GenerateToken(email, role string, userID int64) (string, error) {
+func getSecretKey() []byte {
+	if len(secretKey) == 0 {
+		key := os.Getenv("SECRET_KEY")
+		secretKey = []byte(key)
+	}
+	return secretKey
+}
+
+func GenerateToken(email, role string, userID, OrganizationID int64) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub":   userID,
+		"org":   OrganizationID,
 		"email": email,
 		"role":  role,
 		"exp":   time.Now().Add(time.Hour * 8).Unix(),
 	})
 
-	return token.SignedString(secretKey)
+	return token.SignedString(getSecretKey())
 }
 
 func ValidateToken(tokenString string) (jwt.MapClaims, error) {

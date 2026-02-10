@@ -15,7 +15,7 @@ func Protected(c *fiber.Ctx) error {
 	if tokenString == "" {
 		authHeader := c.Get("Authorization")
 		if len(authHeader) > 7 && strings.HasPrefix(authHeader, "Bearer ") {
-			tokenString = authHeader[:7]
+			tokenString = authHeader[7:]
 		}
 	}
 
@@ -29,6 +29,7 @@ func Protected(c *fiber.Ctx) error {
 	}
 
 	c.Locals("userID", claims["sub"])
+	c.Locals("org", claims["org"])
 	c.Locals("role", claims["role"])
 	c.Locals("email", claims["email"])
 
@@ -37,7 +38,11 @@ func Protected(c *fiber.Ctx) error {
 
 func RoleMiddleware(allowedRoles ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		userRole := c.Locals("role").(string)
+		userRole, ok := c.Locals("role").(string)
+
+		if !ok {
+			return c.Status(500).JSON(fiber.Map{"error": "Erro interno de permissão"})
+		}
 
 		for _, role := range allowedRoles {
 			if role == userRole {

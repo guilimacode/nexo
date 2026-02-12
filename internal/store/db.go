@@ -33,7 +33,7 @@ func createSchema() {
 	CREATE TABLE IF NOT EXISTS organizations (
 		id SERIAL PRIMARY KEY,
 		name VARCHAR(255) NOT NULL,
-		document VARCHAR(20), -- CNPJ da Matriz
+		document VARCHAR(20),
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);
@@ -43,7 +43,7 @@ func createSchema() {
 		street VARCHAR(100) NOT NULL,
 		complement VARCHAR(50),
 		number INTEGER NOT NULL,
-		district VARCHAR(50) NOT NULL,
+		neighborhood VARCHAR(50) NOT NULL,
 		city VARCHAR(50) NOT NULL,
 		state CHAR(2) NOT NULL,
 		zip_code VARCHAR(9) NOT NULL,
@@ -56,8 +56,8 @@ func createSchema() {
 		organization_id INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
 		address_id INTEGER REFERENCES addresses(id) ON DELETE SET NULL,
 		name VARCHAR(255) NOT NULL,
-		code VARCHAR(50),
-		tax_id VARCHAR(20),
+		nickname VARCHAR(50),
+		document VARCHAR(20),
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);

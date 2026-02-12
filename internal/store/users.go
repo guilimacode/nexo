@@ -36,18 +36,29 @@ func GetUserByEmail(email string) (*models.User, error) {
 	return &user, nil
 }
 
-func GetAllUsers(organization_id int64) ([]models.User, error) {
+func GetUsersByOrg(orgID int64) ([]models.User, error) {
 	users := []models.User{}
 
-	query := `SELECT * FROM users WHERE organization_id = $1 ORDER BY full_name ASC`
+	query := `
+        SELECT u.* FROM users u
+        WHERE u.organization_id = $1
+        ORDER BY u.full_name ASC
+    `
+	err := DB.Select(&users, query, orgID)
+	return users, err
+}
 
-	err := DB.Select(&users, query, organization_id)
+func GetUsersByEstablishment(establishmentID int64) ([]models.User, error) {
+	users := []models.User{}
 
-	if err != nil {
-		return nil, err
-	}
+	query := `
+        SELECT * FROM users 
+        WHERE establishment_id = $1
+        ORDER BY full_name ASC
+    `
 
-	return users, nil
+	err := DB.Select(&users, query, establishmentID)
+	return users, err
 }
 
 func GetUserById(id int64) (*models.User, error) {

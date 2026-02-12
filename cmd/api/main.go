@@ -39,6 +39,7 @@ func main() {
 	api.Post("/login", handlers.LoginHandler)
 
 	users := api.Group("/users", middleware.Protected)
+	users.Get("/", handlers.ListUsersHandler)
 	users.Delete("/:id", middleware.RoleMiddleware("owner"), handlers.DeleteUserHandler)
 	users.Put("/:id", handlers.UpdateUserHandler)
 	users.Put("/changepassword/:id", handlers.UpdatePasswordHandler)
@@ -46,6 +47,7 @@ func main() {
 	establishments := api.Group("/establishments", middleware.Protected)
 
 	establishments.Post("/", middleware.RoleMiddleware("owner"), handlers.CreateEstablishmentHandler)
+	establishments.Post("/:id/users", middleware.RoleMiddleware("owner", "manager"), handlers.CreateUserHandler)
 	establishments.Get("/", handlers.ListEstablishmentsHandler)
 	establishments.Get("/:id/users", handlers.ListUsersByEstablishmentHandler)
 	establishments.Get("/:id", handlers.GetEstablishmentsByIDHandler)

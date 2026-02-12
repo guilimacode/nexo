@@ -7,7 +7,7 @@ import (
 )
 
 func CreateAddress(a *models.Address) error {
-	query := `INSERT INTO addresses(street, complement, number, district, city, state, zip_code, created_at, updated_at) VALUES (:street, :complement, :number, :district, :city, :state, :zip_code, NOW(), NOW()) RETURNING id`
+	query := `INSERT INTO addresses(street, complement, number, neighborhood, city, state, zip_code, created_at, updated_at) VALUES (:street, :complement, :number, :neighborhood, :city, :state, :zip_code, NOW(), NOW()) RETURNING id`
 
 	rows, err := DB.NamedQuery(query, a)
 
@@ -31,7 +31,7 @@ func UpdateAddress(a *models.Address) error {
 			SET street = :street,
 				complement = :complement,
 				number = :number,
-				district = :district,
+				neighborhood = :neighborhood,
 				city = :city,
 				state = :state,
 				zip_code = :zip_code,
